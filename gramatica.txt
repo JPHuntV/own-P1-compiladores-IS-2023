@@ -104,23 +104,23 @@ estructuraControl ::=  if ########
     | for
 
 
-return ::= "return" expresion
-break ::= "break"
+return ::= "return" expresion###########
+break ::= "break"#########
 
-argumentos ::= expresion
+argumentos ::= expresion########
     | argumentos "," expresion 
-llamaFuncion ::= identificador "(" ")" "$"?
+llamaFuncion ::= identificador "(" ")" "$"?###########
     |identificador "(" argumentos ")" "$" ?
     |lectura
     | escritura
-asignacion ::= identificador "=" expresion "$"
+asignacion ::= identificador "=" expresion "$"#############
 
 # Permitir sentencias para creación de variables, creación y asignación de expresiones
 #y asignación de expresiones a variables, y algunos casos, sólo expresiones sin 
 #asignación.
 
 
-sentencia ::= asignacion 
+sentencia ::= asignacion ######
     | llamaFuncion "$"
     | estructuraControl 
     | expresion "$"
@@ -133,14 +133,14 @@ sentencia ::= asignacion
     | comentario
 
 
-bloque ::= sentencia | bloque sentencia | sentencia bloque
-parametros ::= tipo identificador
+bloque ::= sentencia | bloque sentencia | sentencia bloque#######
+parametros ::= tipo identificador#########
     | parametros "," tipo identificador
-declaraFuncion ::= tipo identificador "("parametros")" "{" bloque "}"
+declaraFuncion ::= tipo identificador "("parametros")" "{" bloque "}"#########
     | tipo identificador "(" ")" "{" bloque "}"
 
 
-tipo ::= "int" 
+tipo ::= "int" #############
     | "float" 
     | "string" 
     | "char" 
@@ -148,15 +148,14 @@ tipo ::= "int"
     | "bool"
 
 
-declaraArray ::= ("int"|"char") identificador declaraArrayAux "$"
-declaraArrayAux ::= "[" numero "]" | "["numero"]" declaraArrayAux
-declaraVar ::= tipo identificador declaraArrayAux? "=" expresion 
+declaraArray ::= ("int"|"char") identificador declaraArrayAux "$"########################
+declaraVar ::= tipo identificador declaraArrayAux? "=" expresion #################
 
-getValorArray ::= identificador declaraArrayAux "$"?
-setValorArray ::= getValorArray "=" expresion 
+getValorArray ::= identificador declaraArrayAux "$"?###########
+setValorArray ::= getValorArray "=" expresion ##########
 
-lectura ::= leer "(" numerico expresion")" "$"
-numerico ::= intLiteral | floatLiteral
-escritura ::= escribir "(" expresion ")" "$"
+lectura ::= leer "(" numerico expresion")" "$"########
+numerico ::= intLiteral | floatLiteral#######
+escritura ::= escribir "(" expresion ")" "$"#########
 
-comentario ::= "@" stringLiteral | "/_" stringLiteral "_/" #comentario simple o en bloque
+comentario ::= "@" stringLiteral | "/_" stringLiteral "_/" ########comentario simple o en bloque

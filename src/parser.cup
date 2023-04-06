@@ -186,10 +186,81 @@ estructuraControl ::=  if
     | for
     ;
 
+return ::= RETURN expresion ;
+
+break ::= BREAK ;
+
+argumentos ::= expresion
+    | argumentos COMA expresion
+    ;
+
+llamaFuncion ::= identificador LPAREN RPAREN DOLLAR
+    | identificador LPAREN RPAREN
+    | identificador LPAREN argumentos RPAREN DOLLAR
+    | identificador LPAREN argumentos RPAREN
+    | lectura
+    | escritura
+    ;
+
+asignacion ::= identificador ASIGNACION expresion DOLLAR ;
+
+sentencia ::= asignacion 
+    | llamaFuncion DOLLAR
+    | estructuraControl 
+    | expresion DOLLAR
+    | expresionLogica
+    | expresionRelacional
+    | expresionRelLog
+    | declaraVar DOLLAR
+    | return DOLLAR
+    | return
+    | break DOLLAR
+    | comentario
+    ;
+
+bloque ::= sentencia
+    | bloque sentencia
+    | sentencia bloque
+    ;
+
+parametros ::= tipo identificador
+    | parametros COMA tipo identificador
+    ;
+
+declaraFuncion ::= tipo identificador LPAREN parametros RPAREN LBRACE bloque RBRACE
+    | tipo identificador LPAREN RPAREN LBRACE bloque RBRACE
+    ;
+
 tipo ::= INT
-        |FLOAT
-        |STRING
-        |CHAR
-        |ARRAY
-        |BOOL
-        ;
+    |FLOAT
+    |STRING
+    |CHAR
+    |ARRAY
+    |BOOL
+    ;
+
+declaraArray ::= (INT | CHAR) identificador declaraArrayAux DOLLAR ;
+
+declaraArrayAux ::= LBRACKET numero RBRACKET
+    | LBRACKET numero RBRACKET declaraArrayAux
+    ;
+
+declaraVar ::= tipo identificador declaraArrayAux ASIGNACION expresion
+    | tipo identificador ASIGNACION expresion
+    ;
+
+getValorArray ::= identificador declaraArrayAux DOLLAR
+    | identificador declaraArrayAux
+    ;
+
+setValorArray ::= getValorArray ASIGNACION expresion ;
+
+lectura ::= leer LPAREN numerico expresion RPAREN DOLLAR ;
+
+numerico ::= intLiteral | floatLiteral ;
+
+escritura ::= escribir LPAREN expresion RPAREN DOLLAR ;
+
+comentario ::= ARROBA stringLiteral
+    | LCOMENTB stringLiteral RCOMENTB
+    ;
