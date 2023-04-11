@@ -96,6 +96,9 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
     //"\\"            {return symbol(SLASH); }
     "<="            {return symbol(MENORIGUAL); }
     ">="            {return symbol(MAYORIGUAL); }
+
+
+
     "=="            {return symbol(EQUAL); }
     "!="            {return symbol(NOTEQUAL); }
     "**"            {return symbol(POTENCIA); }
@@ -125,7 +128,7 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
     "/_"      { yybegin(COMMENTB); }
 
     
-
+//##################################################
     //ER
     {numero}            {return symbol(LITERAL_INT, new Integer(Integer.parseInt(yytext()))); }
     {float}             {return symbol(LITERAL_FLOAT, new Float(yytext().substring(0,yylength()-1)));  }
@@ -140,7 +143,7 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
     /* whitespace */
     {WhiteSpace}                   { /* ignore */ }
 }
-
+//##################################################
 
  
 <COMMENTB>{
