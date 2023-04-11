@@ -35,17 +35,18 @@ import java_cup.runtime.*;
 //Identifier = [a-zA-Z_] [a-zA-Z0-9_]*
 
 //operador = "+" | "-" | "*" | "/" | "<" | ">" | "<=" | ">=" | "==" | "!="
-
+/**/
 LineTerminator = \r|\n|\r\n
 InputCharacter = [^\r\n]
 
 WhiteSpace = {LineTerminator} | [ \t\f]
 
-Comment = {TraditionalComment} | {EndOfLineComment}
+Comment = {EndOfLineComment} 
+//Comment = {EndOfLineComment}
 
-TraditionalComment = "/_" [^*] ~"_/" | "/_" "*"+ "_/"
-EndOfLineComment = "@" {InputCharacter}* {LineTerminator}?
-
+//TraditionalComment = ["/_"][^*]*[*]+([^*/][^*]*[*]+)*["_/"] 
+EndOfLineComment = "@" {InputCharacter}* {LineTerminator}? 
+//any = [\s\S]*?
 numero = 0 | [1-9][0-9]*
 identificador = [a-zA-Z_] [a-zA-Z0-9_]*
 float    = [0-9]+ \. [0-9]*
@@ -58,14 +59,11 @@ simbolo = "!" | "@" | "#" | "$" | "%" | "^" | "&" | "*"
 string = \"(\\.|[^\"])*\"
 char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
 //------estados
-
-
+%state COMMENTB
 %%
-
 //--------------------reglas lexicas
 
 <YYINITIAL>{
-
     "!"             {return symbol(REXC); }
     "@"             {return symbol(ARROBA); }
     "#"             {return symbol(OR); }
@@ -124,9 +122,9 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
     "break"         {return symbol(BREAK); }
     "leer"          {return symbol(LEER); }
     "escribir"      {return symbol(ESCRIBIR); }
-    "/_"            {return symbol(LCOMENTB); }
-    "_/"            {return symbol(RCOMENTB); }
-     
+    "/*"      { yybegin(COMMENTB); }
+
+    
 
     //ER
     {numero}            {return symbol(LITERAL_INT, new Integer(Integer.parseInt(yytext()))); }
@@ -139,9 +137,18 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
 //<YYINITIAL> {operador}            {return new Symbol(operador, yycolumn, yyline, yytext()); }
 /* comments */
     {Comment}                      { /* ignore */ }
-
     /* whitespace */
     {WhiteSpace}                   { /* ignore */ }
+}
+
+
+ 
+
+<COMMENTB>{
+[^*]*      { }
+"*"+[^*/]* { }
+"*"+"/"    { yybegin(YYINITIAL); }
+.          { }
 }
 
 
