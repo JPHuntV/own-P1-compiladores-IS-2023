@@ -1,4 +1,6 @@
-/*comentario de bloque*/
+/_comentario de bloque_/
+int temp = 12 ** residuo(45)$
+@Esto es un comentario de linea 
 int main () {
 int temp = 12 ** residuo(45)$
 if (temp == -12){
@@ -14,9 +16,9 @@ print(numero)$
 }
 @Esto es un comentario de linea 
 int residuo (int num){
-    /* comentario
+    /_ comentario
     en 
     bloque
-    */
+    _/
 return num + 10 * num$
 }

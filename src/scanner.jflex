@@ -122,7 +122,7 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
     "break"         {return symbol(BREAK); }
     "leer"          {return symbol(LEER); }
     "escribir"      {return symbol(ESCRIBIR); }
-    "/*"      { yybegin(COMMENTB); }
+    "/_"      { yybegin(COMMENTB); }
 
     
 
@@ -143,14 +143,12 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
 
 
  
-
 <COMMENTB>{
-[^*]*      { }
-"*"+[^*/]* { }
-"*"+"/"    { yybegin(YYINITIAL); }
+[^_]*      { }
+"_"+[^_/]* { }
+"_"+"/"    { yybegin(YYINITIAL); }
 .          { }
 }
-
 
 /* error fallback */
 [^]                              { throw new RuntimeException("Illegal character \""+yytext()+

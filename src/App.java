@@ -12,14 +12,14 @@ public class App {
     public void analizar(String archivoFuente) {
         try {
             Reader reader = new BufferedReader(new FileReader(archivoFuente));
-            reader.read();
+            //reader.read();
             Analizador analizador = new Analizador(reader);
             int i = 0;
             Symbol token;
             while(true){
                 token = analizador.next_token();
                 if(token.sym != 0)
-                    System.out.println("Token: " + token.sym + ", valor "+analizador.yytext());
+                    System.out.println("I: " + i + " Token: " + token.sym + ", valor "+analizador.yytext());
                 else{
                     System.out.println("Lexemas encontrados: " + i);
                     return;
