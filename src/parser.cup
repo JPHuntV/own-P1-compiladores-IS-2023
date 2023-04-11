@@ -1,41 +1,81 @@
 package src;
-import java_cup.runtime.Symbol;
+import java_cup.runtime.*;
 
-parser code{:
-    public String resultado = "";
-:}
+parser code  {:
 
 
+  public void report_error(String message, Object info) {
+    StringBuilder m = new StringBuilder("Error ");
+
+    if (info instanceof java_cup.runtime.Symbol)
+      m.append( "("+info.toString()+")" );
+
+    m.append(" : "+message);
+
+    System.out.println(m);
+  }
+
+  public void report_fatal_error(String message, Object info) {
+    report_error(message, info);
+    throw new RuntimeException("Fatal Syntax Error");
+  }
+:};
+//java -jar "../lib/java-cup-11b.jar" -parser analisis_sintactico -symbols sym parser.cup
 
 
 
-action code {::}
+
 
 /*---------------------------declaraciones------------------------*/
 
-terminal REXC, ARROBA, HASH, DOLLAR, PORCIENTO, CONJ, AND, MULT, LPAREN, RPAREN, 
-            MENOS, GUIONBAJO, MAS, ASIGNACION, LBRACKET, RBRACKET, LBRACE, RBRACE, 
-            SEMICOLON, DOSPUNTOS, COMILLASIM, COMILLADOB, COMA, PUNTO, MENOR, MAYOR, 
-            RINTERRO, DIV, PIPE, SLASH, MENORIGUAL, MAYORIGUAL, EQUAL, NOTEQUAL, POTENCIA, 
+terminal REXC, ARROBA, OR, DOLLAR, AND, MULT, LPAREN, RPAREN, 
+            MENOS, MAS, ASIG, LBRACKET, RBRACKET, LBRACE, RBRACE, 
+             COMA, MENOR, MAYOR, 
+            DIV, MENORIGUAL, MAYORIGUAL, EQUAL, NOTEQUAL, POTENCIA, 
             MODULO, INCREMENTO, DECREMENTO, NOT, INT, FLOAT, STRING, CHAR, ARRAY, BOOL, 
-            MAIN, TRUE, FALSE, IF, ELIF, ELSE, WHILE, DO, FOR, RETURN, BREAK, LCOMENTB, 
-            RCOMENTB;
+            MAIN, IF, ELIF, ELSE, WHILE, DO, FOR, RETURN, BREAK, LEER, ESCRIBIR, LCOMENTB, 
+            RCOMENTB; 
 
-terminal String numero, letra, simbolo, floatN, IDENTIFICADOR;
+//terminal String letra, simbolo;
+terminal String LITERAL_INT, LITERAL_FLOAT, LITERAL_BOOL, LITERAL_CHAR, LITERAL_STRING;
+terminal String IDENTIFIER;
 
+non terminal  inicio, programa, main, funciones,
+    expresion, /*expresionAux, termino, factor, valor, opMult, */
+    opRelacional, operadorArit, operadorUnario, operadorLogico, expresionAritmetica, 
+    expresionRelacional, expresionLogica, expresionRelLog, terminoLogico, 
+    operandoArit, operandoRel, /*intLiteral, floatLiteral, stringLiteral, charLiteral, 
+    boolLiteral,*/ array, if, elif, while, doWhile, for, estructuraControl, return, 
+    break, argumentos, llamaFuncion, asignacion, sentencia, bloque, parametros, declaraFuncion,
+    tipo, declaraArray, declaraArrayAux, declaraVar, getValorArray, setValorArray, lectura, numerico, escritura, comentario;
+//non terminal identificador;
+//non terminal operando;
+non terminal senFuncion;
+non terminal igual, noIgual;
+non terminal intChar;
+non terminal aritBool;
+non terminal literales;
+non terminal argumento;
+//non terminal simMenos;
 
-non terminal  inicio, programa, funciones, main,bloque, declaraFuncion, comentario, 
-                identificador, operando, llamaFuncion, expr, prueba, epsilon, break, 
-            intLiteral, floatLiteral, stringLiteral, charLiteral, boolLiteral, tipo;
 //precedencia
+
 precedence left MAS, MENOS;
 precedence left MULT, DIV;
-
+precedence left  POTENCIA, MODULO;
+precedence left AND;
+precedence left OR;
+precedence nonassoc NOT, REXC;
+precedence left RPAREN;
+precedence left LPAREN;
+precedence right DOLLAR;
+precedence right IDENTIFIER;
 start with inicio;
 
 
 
-inicio ::= expr:e {: RESULT = e; :};
+//inicio ::= programa:e {: RESULT = e; :};
+inicio ::= programa;
 
 
 programa ::= main
@@ -53,44 +93,43 @@ funciones ::= funciones declaraFuncion
     ;
 
 
-identificador ::= IDENTIFICADOR;
 
-operando ::= identificador
-    | numero
-    | llamaFuncion
-    ;
+//operando ::= IDENTIFIER
+//    | intLiteral
+//    | llamaFuncion
+//    ;
 
-break ::= BREAK;
+//identificador ::= IDENTIFIER;
 
 expresion ::= expresionRelLog
-    |expresionAux
+    |expresionAritmetica
     ;
 
-expresionAux ::= expresionAux opSuma termino
-    |termino
-    ;
+/*
+    expresionAux ::= termino
+        |expresionAux opSuma termino
+        ;
 
-termino ::= termino opMult factor
-    | factor
-    ;
+    termino ::= factor
+        | termino opMult factor
+        ;
 
-factor ::= operadorUnario valor
-    | valor
-    ;
+    factor ::= operadorUnario valor
+        | valor
+        ;
 
-valor ::= intLiteral
-    | floatLiteral
-    |stringLiteral
-    |charLiteral
-    |boolLiteral
-    |identificador
-    |identificador array
-    |llamaFuncion
-    ;
+    valor ::= aritBool
+        |LITERAL_STRING
+        |LITERAL_CHAR
+        //|LITERAL_BOOL
+        |IDENTIFIER array
+        ;
+//opSuma ::= MAS | meno ;
 
-opSuma ::= MAS | MENOS ;
-
-opMult ::= MULT 
+*/
+operadorArit::= MAS
+    | MENOS
+    | MULT 
     | POTENCIA 
     | DIV 
     | MODULO
@@ -100,21 +139,26 @@ opRelacional ::= MENOR
     | MENORIGUAL
     | MAYOR
     | MAYORIGUAL
-    | EQUAL
-    | EQUAL boolLiteral
-    | NOTEQUAL
-    | NOTEQUAL boolLiteral
+    | igual
+    | noIgual
+    ;
+igual ::= EQUAL
+    | EQUAL LITERAL_BOOL
+    ;
+noIgual ::=NOTEQUAL
+    | NOTEQUAL LITERAL_BOOL
+    ;
+//operadorArit ::= opSuma | opMult;
+
+operadorUnario ::= MENOS numerico
+    | IDENTIFIER INCREMENTO
+    | IDENTIFIER DECREMENTO
     ;
 
-operadorArit ::= opSuma | opMult;
 
-operadorUnario ::= MENOS
-    | INCREMENTO
-    | DECREMENTO
-    ;
 
-operadorLogico ::= CONJ
-    |HASH
+operadorLogico ::= AND
+    |OR
     |REXC
     |NOT
     ;
@@ -123,44 +167,46 @@ expresionAritmetica ::= operandoArit
     | expresionAritmetica operadorArit operandoArit
     ;
 
+expresionRelLog ::= expresionRelacional | expresionLogica ;
+
 expresionRelacional ::= operandoRel opRelacional operandoRel ;
 
 expresionLogica ::= terminoLogico
     | expresionLogica operadorLogico terminoLogico
-    | terminoLogico operadorLogico expresionLogica
     ;
 
-expresionRelLog ::= expresionRelacional | expresionLogica ;
 
 
-terminoLogico ::= operandoArit
-    | boolLiteral
+terminoLogico ::= aritBool
+   // | expresionRelacional
     | LPAREN expresionRelacional RPAREN
-    | expresionRelacional
     ;
 
-operandoArit ::= identificador 
-    | intLiteral 
-    | floatLiteral 
+aritBool ::= operadorArit | LITERAL_BOOL;
+
+operandoArit ::= IDENTIFIER:e {: RESULT = e; :}
+    | LITERAL_INT 
+    | LITERAL_FLOAT 
     | llamaFuncion
+    | operadorUnario
+    | LBRACKET array RBRACKET
     ;
 
 operandoRel ::= operandoArit 
     | LPAREN expresionAritmetica RPAREN
     ;
 
-//literales
-intLiteral ::= numero;
-floatLiteral ::= floatN;
-stringLiteral ::= charLiteral | stringLiteral charLiteral;
-charLiteral ::= COMILLASIM letra COMILLASIM 
-                | COMILLASIM numero COMILLASIM
-                | COMILLASIM simbolo COMILLASIM
-                ;
-boolLiteral ::= TRUE | FALSE;
 
-array ::= array COMA expresion
-    | expresion
+literales ::= LITERAL_INT
+    |LITERAL_FLOAT
+    |LITERAL_BOOL
+    |LITERAL_STRING
+    |LITERAL_CHAR
+    |LBRACKET array RBRACKET
+    ;
+
+array ::= expresion  
+    | array COMA expresion
     ;
 
 //estructuras de control
@@ -186,81 +232,85 @@ estructuraControl ::=  if
     | for
     ;
 
-return ::= RETURN expresion ;
+return ::= RETURN expresion DOLLAR ;
 
 break ::= BREAK ;
 
-argumentos ::= expresion
+argumento ::= IDENTIFIER
+    | literales
+    ;
+
+argumentos ::= argumento
     | argumentos COMA expresion
     ;
 
-llamaFuncion ::= identificador LPAREN RPAREN DOLLAR
-    | identificador LPAREN RPAREN
-    | identificador LPAREN argumentos RPAREN DOLLAR
-    | identificador LPAREN argumentos RPAREN
+llamaFuncion ::= IDENTIFIER LPAREN RPAREN
+    | IDENTIFIER LPAREN argumentos RPAREN
     | lectura
     | escritura
     ;
 
-asignacion ::= identificador ASIGNACION expresion DOLLAR ;
+senFuncion ::= llamaFuncion DOLLAR ;
 
-sentencia ::= asignacion 
-    | llamaFuncion DOLLAR
+asignacion ::= IDENTIFIER ASIG expresion DOLLAR;
+
+sentencia ::= asignacion
+    | senFuncion
     | estructuraControl 
     | expresion DOLLAR
-    | expresionLogica
-    | expresionRelacional
     | expresionRelLog
+    | declaraArray
     | declaraVar DOLLAR
-    | return DOLLAR
     | return
     | break DOLLAR
-    | comentario
+    | getValorArray
+    | setValorArray
+    //| comentario
     ;
 
 bloque ::= sentencia
     | bloque sentencia
-    | sentencia bloque
+    //| sentencia bloque
     ;
 
-parametros ::= tipo identificador
-    | parametros COMA tipo identificador
+parametros ::= tipo IDENTIFIER
+    | parametros COMA tipo IDENTIFIER
     ;
 
-declaraFuncion ::= tipo identificador LPAREN parametros RPAREN LBRACE bloque RBRACE
-    | tipo identificador LPAREN RPAREN LBRACE bloque RBRACE
+declaraFuncion ::= tipo IDENTIFIER LPAREN parametros RPAREN LBRACE bloque RBRACE
+    | tipo IDENTIFIER LPAREN RPAREN LBRACE bloque RBRACE
     ;
 
-tipo ::= INT
+tipo ::= intChar
     |FLOAT
     |STRING
-    |CHAR
     |ARRAY
     |BOOL
     ;
 
-declaraArray ::= (INT | CHAR) identificador declaraArrayAux DOLLAR ;
+intChar ::= INT | CHAR;
+declaraArray ::=  intChar IDENTIFIER declaraArrayAux DOLLAR;
+    //| INT IDENTIFIER declaraArrayAux DOLLAR ;
 
-declaraArrayAux ::= LBRACKET numero RBRACKET
-    | LBRACKET numero RBRACKET declaraArrayAux
+declaraArrayAux ::= LBRACKET LITERAL_INT RBRACKET
+    //| declaraArrayAux LBRACKET LITERAL_INT RBRACKET 
     ;
 
-declaraVar ::= tipo identificador declaraArrayAux ASIGNACION expresion
-    | tipo identificador ASIGNACION expresion
+declaraVar ::= tipo IDENTIFIER ASIG expresion 
+    | tipo IDENTIFIER declaraArrayAux ASIG expresion 
     ;
 
-getValorArray ::= identificador declaraArrayAux DOLLAR
-    | identificador declaraArrayAux
+getValorArray ::= IDENTIFIER declaraArrayAux
     ;
 
-setValorArray ::= getValorArray ASIGNACION expresion ;
+setValorArray ::= getValorArray ASIG expresion ;
 
-lectura ::= leer LPAREN numerico expresion RPAREN DOLLAR ;
+lectura ::= LEER LPAREN numerico RPAREN DOLLAR ;
 
-numerico ::= intLiteral | floatLiteral ;
+numerico ::= LITERAL_INT | LITERAL_FLOAT ; 
 
-escritura ::= escribir LPAREN expresion RPAREN DOLLAR ;
+escritura ::= ESCRIBIR LPAREN expresion RPAREN DOLLAR ;
 
-comentario ::= ARROBA stringLiteral
-    | LCOMENTB stringLiteral RCOMENTB
+comentario ::= ARROBA LITERAL_STRING
+    | LCOMENTB LITERAL_STRING RCOMENTB
     ;

@@ -1,126 +1,108 @@
-# | or
-# [] opcionales
-# {} pueden repetirse ninguna o más veces
-# ::= inicio de bloque
-# # comentario
 
-#podria tener una más sentencias dento del bloque 
-programa ::= main | funciones main | main funciones | funciones main funciones ######
+programa = main | funciones main | main funciones | funciones main funciones ;
 
-main ::= "int" "main" "("")" "{" bloque "}" #####
+main = "int" "main" "("")" "{" bloque "}";
 
-funciones ::= funciones declaraFuncion##############
+funciones = funciones declaraFuncion
     | declaraFuncion
-    | comentario
-#######
-numero ::= (-?)[1-9][0-9]* | 0   ##debe aceptar negativos
-letra ::= [a-zA-Z] ## debe aceptar otros caracteres
-simbolo ::= "!" | "@" | "#" | "$" | "%" | "^" | "&" | "*" | "(" | ")" | "-" | "_" | "+" | "=" | "[" | "]" | "{" | "}" | ";" | ":" | "'" | '"' | "," | "." | "<" | ">" | "?" | "/" | "|" | "\"
-######
-#----operador ::= "+" | "-" | "*" | "/" | "<" | ">" | "<=" | ">=" | "==" | "!="
+    | comentario;
 
-#un identificador puede ser una letra
-#o una letra con varias letras o numeros
-identificador ::= [a-zA-Z_][a-zA-Z0-9_]*##########
+numero = (-?)[1-9][0-9]* | 0 ;
+letra = [a-zA-Z] ;
+simbolo = "!" | "@" | "#" | "$" | "%" | "^" | "&" | "*" | "(" | ")" | "-" | "_" | "+" | "=" | "[" | "]" | "{" | "}" | ";" | ":" | "'" | '"' | "," | "." | "<" | ">" | "?" | "/" | "|" | "\";
+identificador = [a-zA-Z_][a-zA-Z0-9_]*;
 
 
-operando ::= identificador #######
+operando = identificador
     | numero 
-    | llamaFuncion
+    | llamaFuncion;
 
 
-#Las expresiones permiten combinar literales, variables y/o funciones, 
-#de los tipos reconocidos en la gramática.
-#######
-expresion ::=  expresionRelLog | termino (opSuma termino)* #es un valor, respeta precedencia de operadores
-termino ::= factor (opMult factor)*
-factor ::= operadorUnario? valor #puede o no darse el operador unario, es opcional
-############
 
-valor ::= intLiteral 
+expresion =  expresionRelLog | termino (opSuma termino)* ;
+termino = factor (opMult factor)*;
+factor = operadorUnario? valor;
+
+
+valor = intLiteral 
     | floatLiteral 
     | stringLiteral 
     | charLiteral 
     | boolLiteral 
     | identificador array? 
-    | llamaFuncion
+    | llamaFuncion;
 
 
-#op binarios
-opSuma ::= "+" | "-"
-opMult ::= "*" | "**" | "/" | "~"
-opRelacional ::= "<" | "<=" | ">" | ">=" | "==" boolLiteral? | "!="  boolLiteral?
-operadorArit ::= opSuma | opMult
-#operador Unario
-operadorUnario ::= "-" | "++" | "--"
-operadorLogico ::= "^" | "#" | "!" | "not" 
 
-expresionAritmetica ::= operandoArit #####################
-    | expresionAritmetica operadorArit operandoArit
+opSuma = "+" | "-";
+opMult = "*" | "**" | "/" | "~";
+opRelacional = "<" | "<=" | ">" | ">=" | "==" boolLiteral? | "!="  boolLiteral?;
+operadorArit = opSuma | opMult;
 
-expresionRelacional ::= operandoRel opRelacional operandoRel##################
+operadorUnario = "-" | "++" | "--";
+operadorLogico = "^" | "#" | "!" | "not" ;
 
-expresionLogica ::= terminoLogico############
+expresionAritmetica = operandoArit
+    | expresionAritmetica operadorArit operandoArit;
+
+expresionRelacional = operandoRel opRelacional operandoRel;
+
+expresionLogica = terminoLogico
     | expresionLogica operadorLogico terminoLogico
-    | terminoLogico operadorLogico expresionLogica
-expresionRelLog ::= expresionRelacional | expresionLogica###########
+    | terminoLogico operadorLogico expresionLogica;
+expresionRelLog = expresionRelacional | expresionLogica;
 
-terminoLogico  ::= operandoArit###############
+terminoLogico  = operandoArit
     | boolLiteral 
     | "("expresionRelacional")" 
-    | expresionRelacional
+    | expresionRelacional;
 
-operandoArit ::= identificador | intLiteral | floatLiteral | llamaFuncion###############
-operandoRel ::= operandoArit | "("expresionAritmetica")" ###############
+operandoArit = identificador | intLiteral | floatLiteral | llamaFuncion;
+operandoRel = operandoArit | "("expresionAritmetica")";
 
-#literales
-intLiteral ::= numero #####
-floatLiteral ::= (((-?)[1-9][0-9]*) | 0) . [0-9]+ | 0.0 #####
-stringLiteral ::= charLiteral | stringLiteral charLiteral #####
-charLiteral ::= "'" letra "'" | "'" numero "'" | simbolo #####
-boolLiteral ::= "true" | "false" #####
-array ::= expresion ("," expresion)* #####
 
-#estructuras de control
+intLiteral = numero ;
+floatLiteral = (((-?)[1-9][0-9]*) | 0) . [0-9]+ | 0.0;
+stringLiteral = charLiteral | stringLiteral charLiteral ;
+charLiteral = "'" letra "'" | "'" numero "'" | simbolo;
+boolLiteral = "true" | "false" ;
+array = expresion ("," expresion)* ;
 
-#elif else es opcional []
-if ::= "if" "("expresionRelLog")" "{" bloque "}"###########
+
+if = "if" "("expresionRelLog")" "{" bloque "}"
     | "if" "("expresionRelLog")" "{" bloque "}" elif
     | "if" "("expresionRelLog")" "{" bloque "}" elif "else" "{" bloque "}"
-    | "if" "("expresionRelLog")" "{" bloque "}" "else" "{" bloque "}"
-elif ::= "elif" "("expresionRelLog")" "{" bloque "}" ########
-    | elif "elif" "("expresionRelLog")" "{" bloque "}" 
+    | "if" "("expresionRelLog")" "{" bloque "}" "else" "{" bloque "}";
+elif = "elif" "("expresionRelLog")" "{" bloque "}"
+    | elif "elif" "("expresionRelLog")" "{" bloque "}" ;
 
-while ::= "while" "("expresionRelLog")" "{" bloque "}"######
+while = "while" "("expresionRelLog")" "{" bloque "}";
 
-doWhile ::= "do" "{" bloque "}" "while" "("expresionRelLog")" "$"######
+doWhile = "do" "{" bloque "}" "while" "("expresionRelLog")" "$";
 
-for ::= "for" "(" declaraVar expresionRelLog "$" expresion ")" "{" bloque "}"##########
+for = "for" "(" declaraVar expresionRelLog "$" expresion ")" "{" bloque "}";
 
 
-estructuraControl ::=  if ########
+estructuraControl =  if
     | while 
     | doWhile 
-    | for
+    | for;
 
 
-return ::= "return" expresion###########
-break ::= "break"#########
+return = "return" expresion;
+break = "break";
 
-argumentos ::= expresion########
-    | argumentos "," expresion 
-llamaFuncion ::= identificador "(" ")" "$"?###########
+argumentos = expresion
+    | argumentos "," expresion ;
+llamaFuncion = identificador "(" ")" "$"?
     |identificador "(" argumentos ")" "$" ?
     |lectura
-    | escritura
-asignacion ::= identificador "=" expresion "$"#############
-
-# Permitir sentencias para creación de variables, creación y asignación de expresiones
-#y asignación de expresiones a variables, y algunos casos, sólo expresiones sin 
-#asignación.
+    | escritura;
+asignacion = identificador "=" expresion "$";
 
 
-sentencia ::= asignacion ######
+
+sentencia = asignacion
     | llamaFuncion "$"
     | estructuraControl 
     | expresion "$"
@@ -130,32 +112,32 @@ sentencia ::= asignacion ######
     | declaraVar "$"
     | return "$"?
     | break "$"
-    | comentario
+    | comentario;
 
 
-bloque ::= sentencia | bloque sentencia | sentencia bloque#######
-parametros ::= tipo identificador#########
-    | parametros "," tipo identificador
-declaraFuncion ::= tipo identificador "("parametros")" "{" bloque "}"#########
-    | tipo identificador "(" ")" "{" bloque "}"
+bloque = sentencia | bloque sentencia | sentencia bloque;
+parametros = tipo identificador
+    | parametros "," tipo identificador;
+declaraFuncion = tipo identificador "("parametros")" "{" bloque "}"
+    | tipo identificador "(" ")" "{" bloque "}";
 
 
-tipo ::= "int" #############
+tipo = "int" 
     | "float" 
     | "string" 
     | "char" 
     | "array" 
     | "bool"
+;
 
+declaraArray = ("int"|"char") identificador declaraArrayAux "$";
+declaraVar = tipo identificador declaraArrayAux? "=" expresion ;
 
-declaraArray ::= ("int"|"char") identificador declaraArrayAux "$"########################
-declaraVar ::= tipo identificador declaraArrayAux? "=" expresion #################
+getValorArray = identificador declaraArrayAux "$"?;
+setValorArray = getValorArray "=" expresion ;
 
-getValorArray ::= identificador declaraArrayAux "$"?###########
-setValorArray ::= getValorArray "=" expresion ##########
+lectura = "leer" "(" numerico")" "$";
+numerico = intLiteral | floatLiteral;
+escritura = "escribir" "(" expresion ")" "$";
 
-lectura ::= leer "(" numerico expresion")" "$"########
-numerico ::= intLiteral | floatLiteral#######
-escritura ::= escribir "(" expresion ")" "$"#########
-
-comentario ::= "@" stringLiteral | "/_" stringLiteral "_/" ########comentario simple o en bloque
+comentario = "@" stringLiteral | "/_" stringLiteral "_/";
