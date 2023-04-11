@@ -48,6 +48,8 @@ non terminal  inicio, programa, main, funciones,
     boolLiteral,*/ array, if, elif, while, doWhile, for, estructuraControl, return, 
     break, argumentos, llamaFuncion, asignacion, sentencia, bloque, parametros, declaraFuncion,
     tipo, declaraArray, declaraArrayAux, declaraVar, getValorArray, setValorArray, lectura, numerico, escritura, comentario;
+
+    
 //non terminal identificador;
 //non terminal operando;
 non terminal senFuncion;
