@@ -1,24 +1,27 @@
-/_comentario de bloque_/
-int temp = 12 ** residuo(45)$
-@Esto es un comentario de linea 
+/_comentario de bloque _/
+int residuo (int num, char letra, string a){
+    int numa = 2$
+    numa = 2$
+return num + 10 * num$
+}
 int main () {
 int temp = 12 ** residuo(45)$
 if (temp == -12){
 temp = read()$ temp = temp - --temp$
 break$}
 else
-{ temp = (var+23) > 45 ^ true # otra == dif $
+{ temp = ((var+23) > 45) ^ true # (otra == dif) $
 }
-string miString = "@$#%&/()!¡¿??¡?"$
-boolean miBool = 2 >= 7$
-int numero = 45.5 / (34.0 ~ 4.0)$
+string miString = "$#%&/()!¡¿??¡?"$
+bool miBool = 2 >= 7$
+int numero = 45.5 /4.0 ~ 4.0$
+
 print(numero)$
 }
-@Esto es un comentario de linea 
-int residuo (int num){
-    /_ comentario
-    en 
-    bloque
-    _/
+
+@Esto es un comentario de linea
+
+
+char residuoe (int num){
 return num + 10 * num$
 }

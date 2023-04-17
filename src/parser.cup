@@ -1,136 +1,170 @@
 package src;
 import java_cup.runtime.*;
 
-parser code  {:
 
+import java.util.Stack;
+import java.util.ArrayList;
+import java.util.List;
+parser code {:
 
-  public void report_error(String message, Object info) {
-    StringBuilder m = new StringBuilder("Error ");
+    FormalParameterList listaParametros = new FormalParameterList();
+    FormalParameterList listaVariables = new FormalParameterList();
 
-    if (info instanceof java_cup.runtime.Symbol)
-      m.append( "("+info.toString()+")" );
+    List<Function> functions = new ArrayList<Function>();
+    SymbolTableStack symbolTables = new SymbolTableStack();
+    
+    private Boolean existeFuncion(String nombre){
+        for(Function funcion : functions){
+            if(funcion.getName() == nombre){
+                return true;
+            }
+        }
+        return false;
+    }
 
-    m.append(" : "+message);
+    public SymbolTableStack getSymbolTableStack() {
+        return symbolTables;
+    }
 
-    System.out.println(m);
-  }
+    private Boolean existeSimbolo(String nombre){
+        Boolean existe = false;
+        for(FormalParameter param : listaParametros.getParams()){
+            if(param.getName() == nombre){
+                existe =  true;
+            }
+        }
+        for(FormalParameter param : listaVariables.getParams()){
+            if(param.getName() == nombre){
+                existe =  true;
+            }
+        }
+        if(existe == false){
+            System.out.println("La variable "+ nombre +" aun no ha sido declarada!");
+        }
+        return existe;
+    }
 
-  public void report_fatal_error(String message, Object info) {
-    report_error(message, info);
-    throw new RuntimeException("Fatal Syntax Error");
-  }
-:};
-//java -jar "../lib/java-cup-11b.jar" -parser analisis_sintactico -symbols sym parser.cup
+    Analizador s;
+    parser(Analizador s){ this.s=s; }
+:}
 
-
-
-
+//init with {: s.init(); :};
+scan with {: return s.next_token(); :};
 
 /*---------------------------declaraciones------------------------*/
 
-terminal REXC, ARROBA, OR, DOLLAR, AND, MULT, LPAREN, RPAREN, 
+terminal REXC, OR, AND, MULT, LPAREN , RPAREN, 
             MENOS, MAS, ASIG, LBRACKET, RBRACKET, LBRACE, RBRACE, 
              COMA, MENOR, MAYOR, 
             DIV, MENORIGUAL, MAYORIGUAL, EQUAL, NOTEQUAL, POTENCIA, 
-            MODULO, INCREMENTO, DECREMENTO, NOT, INT, FLOAT, STRING, CHAR, ARRAY, BOOL, 
-            MAIN, IF, ELIF, ELSE, WHILE, DO, FOR, RETURN, BREAK, LEER, ESCRIBIR, LCOMENTB, 
-            RCOMENTB; 
+            MODULO, INCREMENTO, DECREMENTO, NOT, IF, ELIF, ELSE, WHILE, DO, FOR, RETURN, BREAK, LEER, ESCRIBIR;
 
 //terminal String letra, simbolo;
 terminal String LITERAL_INT, LITERAL_FLOAT, LITERAL_BOOL, LITERAL_CHAR, LITERAL_STRING;
-terminal String IDENTIFIER;
+terminal String IDENTIFIER, DOLLAR, INT, FLOAT, STRING, CHAR, ARRAY, BOOL,MAIN;
 
 non terminal  inicio, programa, main, funciones,
-    expresion, /*expresionAux, termino, factor, valor, opMult, */
-    opRelacional, operadorArit, operadorUnario, operadorLogico, expresionAritmetica, 
+    expresion, opRelacional, operadorArit, operadorUnario, operadorLogico, expresionAritmetica, 
     expresionRelacional, expresionLogica, expresionRelLog, terminoLogico, 
-    operandoArit, operandoRel, /*intLiteral, floatLiteral, stringLiteral, charLiteral, 
-    boolLiteral,*/ array, if, elif, while, doWhile, for, estructuraControl, return, 
+    operandoArit, operandoRel, array, if, elif, while, doWhile, for, estructuraControl, return, 
     break, argumentos, llamaFuncion, asignacion, sentencia, bloque, parametros, declaraFuncion,
-    tipo, declaraArray, declaraArrayAux, declaraVar, getValorArray, setValorArray, lectura, numerico, escritura, comentario;
+    tipo, declaraArray, declaraArrayAux, declaraVar, getValorArray, setValorArray, lectura, numerico, escritura;
 
     
-//non terminal identificador;
-//non terminal operando;
-non terminal senFuncion;
+
+
 non terminal igual, noIgual;
-non terminal intChar;
-non terminal aritBool;
 non terminal literales;
 non terminal argumento;
-//non terminal simMenos;
+non terminal else;
+non terminal bloqueFunc;
+non terminal bloqueMain;
+terminal uminus;
 
 //precedencia
 
+
+
+
 precedence left MAS, MENOS;
 precedence left MULT, DIV;
+precedence right uminus;
 precedence left  POTENCIA, MODULO;
-precedence left AND;
-precedence left OR;
+precedence left AND, OR;
 precedence nonassoc NOT, REXC;
-precedence left RPAREN;
-precedence left LPAREN;
-precedence right DOLLAR;
-precedence right IDENTIFIER;
+precedence left DOLLAR;
+
+precedence left CHAR, INT;
+precedence left IDENTIFIER;
+precedence left LPAREN,LBRACKET;
+
+
+
 start with inicio;
 
+inicio ::= programa:e {: RESULT = e; :};
 
 
-//inicio ::= programa:e {: RESULT = e; :};
-inicio ::= programa;
-
-
-programa ::= main
-    | funciones main
-    | main funciones
-    | funciones main funciones
+programa ::= main {: System.out.println("encontro main"); :}
+    | funciones main {: System.out.println("encontro funciones main"); :}
+    | main funciones {: System.out.println("encontro main funciones"); :}
+    | funciones main funciones {: System.out.println("encontro funciones main funciones"); :}
     ;
 
-main ::= INT MAIN LPAREN RPAREN LBRACE bloque RBRACE ;
 
+main ::= INT:t MAIN:e LPAREN RPAREN LBRACE bloqueMain RBRACE {: System.out.println("encontro main"); 
+        Boolean existe = false;
+        for (Function f : functions) {
+            if (f.getName().equals(e)) {
+                System.out.println("Function " + e + " ya fue declarada");
+                existe = true;
+            }
+        }
+        if(existe == false){
+            Function newFunction = new Function(e, listaParametros.getParams());
+            functions.add(newFunction);
+
+            /* Create a new symbol table object for the function */
+            SymbolTable symbolTable = new SymbolTable(e);
+
+            /* Add the function parameters to the symbol table */
+            for (FormalParameter param : listaParametros.getParams()) {
+                symbolTable.addSymbol(param.getName(), param.getType());
+            }
+            for (FormalParameter par : listaVariables.getParams()) {
+                if (symbolTable.containsSymbol( par.getName())) {
+                    System.out.println("Symbol " +  par.getName() + " already declared in this function");
+                }else{
+                    symbolTable.addSymbol(par.getName(), par.getType());
+                    System.out.println("declaracion -> " + par.getName()+"tipo "+par.getType());
+                }
+            }
+            
+
+            //List<SymbolTable> symbolTables = (List<SymbolTable>) getSymbolTableStack().peek();
+             getSymbolTableStack().push(symbolTable);
+            
+        }
+
+        listaVariables  = new FormalParameterList();
+        listaParametros  = new FormalParameterList();
+       
+        :};
+
+bloqueMain ::= bloque ;
 
 funciones ::= funciones declaraFuncion
     | declaraFuncion
-    | comentario
     ;
 
 
-
-//operando ::= IDENTIFIER
-//    | intLiteral
-//    | llamaFuncion
-//    ;
-
-//identificador ::= IDENTIFIER;
-
-expresion ::= expresionRelLog
-    |expresionAritmetica
+expresion ::= expresionRelLog{: System.out.println("encontro expresionRellogica"); :}
+    |expresionAritmetica {: System.out.println("encontro expresionAritmetica"); :}
     ;
 
-/*
-    expresionAux ::= termino
-        |expresionAux opSuma termino
-        ;
 
-    termino ::= factor
-        | termino opMult factor
-        ;
-
-    factor ::= operadorUnario valor
-        | valor
-        ;
-
-    valor ::= aritBool
-        |LITERAL_STRING
-        |LITERAL_CHAR
-        //|LITERAL_BOOL
-        |IDENTIFIER array
-        ;
-//opSuma ::= MAS | meno ;
-
-*/
 operadorArit::= MAS
-    | MENOS
+    | MENOS {: System.out.println("encontro MENOS"); :}
     | MULT 
     | POTENCIA 
     | DIV 
@@ -141,63 +175,58 @@ opRelacional ::= MENOR
     | MENORIGUAL
     | MAYOR
     | MAYORIGUAL
-    | igual
-    | noIgual
+    | EQUAL {: System.out.println("encontro EQUAL"); :}
+    | NOTEQUAL {: System.out.println("encontro NOTEQUAL"); :}
     ;
-igual ::= EQUAL
-    | EQUAL LITERAL_BOOL
-    ;
-noIgual ::=NOTEQUAL
-    | NOTEQUAL LITERAL_BOOL
-    ;
-//operadorArit ::= opSuma | opMult;
 
-operadorUnario ::= MENOS numerico
-    | IDENTIFIER INCREMENTO
-    | IDENTIFIER DECREMENTO
+operadorUnario ::= MENOS numerico  {:System.out.println("encontro unario menos"); :} %prec uminus
+    | INCREMENTO IDENTIFIER {: System.out.println("encontro unario incremento "); :}
+    | DECREMENTO IDENTIFIER {: System.out.println("encontro unario decremento"); :}
     ;
 
 
 
 operadorLogico ::= AND
-    |OR
+    |OR {: System.out.println("encontro logico or "); :}
     |REXC
     |NOT
     ;
 
-expresionAritmetica ::= operandoArit 
-    | expresionAritmetica operadorArit operandoArit
+expresionAritmetica ::= operandoArit {: System.out.println("encontro operandoArit"); :}
+    | expresionAritmetica operadorArit operandoArit {: System.out.println("encontro expresionAritmetica operadorArit operandoArit"); :}
     ;
 
-expresionRelLog ::= expresionRelacional | expresionLogica ;
+expresionRelLog ::= expresionRelacional {: System.out.println("encontro expresionRelacional"); :}
+    | expresionLogica {: System.out.println("encontro expresionLogica"); :}
+    ;
 
-expresionRelacional ::= operandoRel opRelacional operandoRel ;
+expresionRelacional ::= operandoRel opRelacional operandoRel {: System.out.println("encontro operandoRel opRelacional operandoRel"); :} ;
 
-expresionLogica ::= terminoLogico
-    | expresionLogica operadorLogico terminoLogico
+expresionLogica ::= terminoLogico {: System.out.println("encontro terminoLogico"); :}
+    | expresionLogica operadorLogico terminoLogico {: System.out.println("encontro expresionLogica operadorLogico terminoLogico"); :}
     ;
 
 
 
-terminoLogico ::= aritBool
-   // | expresionRelacional
+terminoLogico ::= LITERAL_BOOL {: System.out.println("encontro LITERAL_BOOL"); :}
     | LPAREN expresionRelacional RPAREN
     ;
 
-aritBool ::= operadorArit | LITERAL_BOOL;
-
-operandoArit ::= IDENTIFIER:e {: RESULT = e; :}
-    | LITERAL_INT 
-    | LITERAL_FLOAT 
-    | llamaFuncion
-    | operadorUnario
-    | LBRACKET array RBRACKET
+operandoArit ::= IDENTIFIER {: System.out.println("encontro operandoArit       identifier"); :}
+    | LITERAL_STRING {: System.out.println("encontro operandoArit       LITERAL_STRING"); :}
+    | LITERAL_INT       {: System.out.println("encontro operandoArit       LITERAL_INT"); :}
+    | LITERAL_FLOAT     {: System.out.println("encontro operandoArit       LITERAL_FLOAT"); :}
+    | LITERAL_CHAR    {: System.out.println("encontro operandoArit       LITERAL_CHAR"); :}
+    | llamaFuncion      {: System.out.println("encontro llamafuncion"); :}
+    | operadorUnario    {: System.out.println("encontro operandoArit  operadorUnarioxxx"); :}
+    | LBRACKET array RBRACKET {: System.out.println("encontro operandoArit array"); :}
+    | getValorArray
     ;
 
 operandoRel ::= operandoArit 
+    | LITERAL_BOOL
     | LPAREN expresionAritmetica RPAREN
     ;
-
 
 literales ::= LITERAL_INT
     |LITERAL_FLOAT
@@ -212,107 +241,168 @@ array ::= expresion
     ;
 
 //estructuras de control
-if ::= IF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE
-    | IF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE elif
-    | IF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE elif ELSE LBRACE bloque RBRACE
-    | IF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE ELSE LBRACE bloque RBRACE
+
+
+if ::= IF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE {: System.out.println("encontro if"); :}
     ;
 
-elif ::= ELIF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE
-    | elif ELIF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE
+elif ::= ELIF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE {: System.out.println("encontro elif"); :}
+    | elif ELIF LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE {: System.out.println("encontro elif elif"); :}
     ;
 
-while ::= WHILE LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE ;
+else ::= ELSE LBRACE bloque RBRACE {: System.out.println("encontro else"); :};
 
-doWhile ::= DO LBRACE bloque RBRACE WHILE LPAREN expresionRelLog RPAREN DOLLAR ;
+while ::= WHILE LPAREN expresionRelLog RPAREN LBRACE bloque RBRACE 
+    {: System.out.println("encontro while"); :};
 
-for ::= FOR LPAREN declaraVar expresionRelLog DOLLAR expresion RPAREN LBRACE bloque RBRACE ;
+doWhile ::= DO LBRACE bloque RBRACE WHILE LPAREN expresionRelLog RPAREN DOLLAR
+    {: System.out.println("encontro dowhile"); :};
 
-estructuraControl ::=  if 
-    | while 
+for ::= FOR LPAREN declaraVar DOLLAR expresionRelLog DOLLAR expresion  RPAREN LBRACE bloque RBRACE 
+    {: System.out.println("encontro for"); :}
+    ;
+
+estructuraControl ::=  if {: System.out.println("encontro if"); :}
+    |if elif {: System.out.println("encontro if elif"); :}
+    |if elif else {: System.out.println("encontro if elif else"); :}
+    |if  else {: System.out.println("encontro if else"); :}
+    | while {: System.out.println("encontro while"); :}
     | doWhile 
-    | for
+    | for {: System.out.println("encontro for"); :}
     ;
 
-return ::= RETURN expresion DOLLAR ;
-
-break ::= BREAK ;
-
-argumento ::= IDENTIFIER
-    | literales
+return ::= RETURN expresion {: System.out.println("encontro  RETURN expresion"); :}
+    |RETURN {: System.out.println("encontro RETURN"); :}
     ;
 
-argumentos ::= argumento
-    | argumentos COMA expresion
+break ::= BREAK {: System.out.println("encontro BREAK"); :};
+
+argumento ::= IDENTIFIER {: System.out.println("encontro IDENTIFIER"); :}
+    | literales {: System.out.println("encontro literales"); :}
     ;
 
-llamaFuncion ::= IDENTIFIER LPAREN RPAREN
-    | IDENTIFIER LPAREN argumentos RPAREN
-    | lectura
-    | escritura
+argumentos ::= argumento {: System.out.println("encontro argumento"); :}
+    | argumentos COMA expresion {: System.out.println("encontro argumentos COMA expresion"); :}
     ;
 
-senFuncion ::= llamaFuncion DOLLAR ;
-
-asignacion ::= IDENTIFIER ASIG expresion DOLLAR;
-
-sentencia ::= asignacion
-    | senFuncion
-    | estructuraControl 
-    | expresion DOLLAR
-    | expresionRelLog
-    | declaraArray
-    | declaraVar DOLLAR
-    | return
-    | break DOLLAR
-    | getValorArray
-    | setValorArray
-    //| comentario
+llamaFuncion ::= IDENTIFIER  LPAREN RPAREN {: System.out.println("encontro IDENTIFIER  LPAREN RPAREN"); :}
+    | IDENTIFIER LPAREN argumentos RPAREN {: System.out.println("encontro IDENTIFIER LPAREN argumentos RPAREN"); :}
+    | lectura {: System.out.println("encontro lectura"); :}
+    | escritura {: System.out.println("encontro escritura"); :}
     ;
 
-bloque ::= sentencia
-    | bloque sentencia
-    //| sentencia bloque
+
+asignacion ::= IDENTIFIER:e ASIG expresion {: System.out.println("encontro IDENTIFIER ASIG expresion");
+    existeSimbolo(e);
+ :} ;
+
+sentencia ::= asignacion DOLLAR  {: System.out.println("encontro asignacion"); :}
+    //| funciones main
+    | estructuraControl {: System.out.println("encontro estructuracontrol"); :}
+    | expresion DOLLAR {: System.out.println("encontro expresion DOLLAR"); :}
+    | declaraArray DOLLAR {: System.out.println("encontro declara DOLLAR"); :}
+    | declaraVar DOLLAR {: System.out.println("encontro sentencia -> declaraVar"); :}
+    | return DOLLAR {: System.out.println("encontro return dollar"); :}
+    | break DOLLAR {: System.out.println("encontro break DOLLAR"); :}
+    | getValorArray DOLLAR {: System.out.println("encontro getValorArray DOLLAR"); :}
+    | setValorArray DOLLAR {: System.out.println("encontro setValorArray DOLLAR"); :}
+    | error DOLLAR {: System.out.println("#######error encontrado###############"); :}
     ;
 
-parametros ::= tipo IDENTIFIER
-    | parametros COMA tipo IDENTIFIER
+bloque ::= sentencia {: System.out.println("encontro sentencia"); :}
+    | bloque sentencia {: System.out.println("encontro bloque sentencia"); :}
     ;
 
-declaraFuncion ::= tipo IDENTIFIER LPAREN parametros RPAREN LBRACE bloque RBRACE
-    | tipo IDENTIFIER LPAREN RPAREN LBRACE bloque RBRACE
+parametros ::= tipo:t IDENTIFIER:i {: System.out.println("encontro tipo IDENTIFIER"); listaParametros.addParameter(new FormalParameter(i,(String) t));:}
+    | parametros:p COMA tipo:t IDENTIFIER:i {: System.out.println("encontro parametros COMA tipo IDENTIFIER");listaParametros.addParameter(new FormalParameter(i,(String) t));:}
     ;
 
-tipo ::= intChar
-    |FLOAT
-    |STRING
-    |ARRAY
-    |BOOL
+declaraFuncion ::= tipo IDENTIFIER:e LPAREN parametros RPAREN LBRACE bloqueFunc RBRACE 
+        {: System.out.println("encontro tipo IDENTIFIER LPAREN parametros RPAREN LBRACE bloque RBRACE       "+e);
+        Boolean existe = false;
+        for (Function f : functions) {
+            if (f.getName().equals(e)) {
+                System.out.println("Function " + e + " ya fue declarada");
+                existe = true;
+            }
+        }
+        if(existe == false){
+            Function newFunction = new Function(e, listaParametros.getParams());
+            functions.add(newFunction);
+
+            /* Create a new symbol table object for the function */
+            SymbolTable symbolTable = new SymbolTable(e);
+
+            /* Add the function parameters to the symbol table */
+            for (FormalParameter param : listaParametros.getParams()) {
+                symbolTable.addSymbol(param.getName(), param.getType());
+            }
+            for (FormalParameter par : listaVariables.getParams()) {
+                if (symbolTable.containsSymbol( par.getName())) {
+                    System.out.println("Symbol " +  par.getName() + " already declared in this function");
+                }else{
+                    symbolTable.addSymbol(par.getName(), par.getType());
+                    System.out.println("declaracion -> " + par.getName()+"tipo "+par.getType());
+                }
+            }
+            
+
+            //List<SymbolTable> symbolTables = (List<SymbolTable>) getSymbolTableStack().peek();
+             getSymbolTableStack().push(symbolTable);
+            
+        }
+
+        listaVariables  = new FormalParameterList();
+        listaParametros  = new FormalParameterList();
+       
+        :}
+    | tipo IDENTIFIER LPAREN RPAREN LBRACE bloqueFunc RBRACE {: System.out.println("encontro tipo IDENTIFIER LPAREN RPAREN LBRACE bloque RBRACE"); :}
     ;
 
-intChar ::= INT | CHAR;
-declaraArray ::=  intChar IDENTIFIER declaraArrayAux DOLLAR;
-    //| INT IDENTIFIER declaraArrayAux DOLLAR ;
+bloqueFunc ::= bloque;// {: popSymbolTable(); :};
 
-declaraArrayAux ::= LBRACKET LITERAL_INT RBRACKET
-    //| declaraArrayAux LBRACKET LITERAL_INT RBRACKET 
+tipo ::= INT:e {: System.out.println("encontro int--------"+e);RESULT = e;:}
+    | CHAR:e {: System.out.println("encontro char"); RESULT = e;:}
+    |FLOAT:e {: System.out.println("encontro FLOAT"); RESULT = e;:}
+    |STRING:e {: System.out.println("encontro string"); RESULT = e;:}
+    |ARRAY:e {: System.out.println("encontro array"); RESULT = e;:}
+    |BOOL:e {: System.out.println("encontro bool");RESULT = e; :}
     ;
 
-declaraVar ::= tipo IDENTIFIER ASIG expresion 
-    | tipo IDENTIFIER declaraArrayAux ASIG expresion 
+declaraArray ::=  INT IDENTIFIER LBRACKET LITERAL_INT RBRACKET DOLLAR{: System.out.println("encontro  INT IDENTIFIER LBRACKET LITERAL_INT RBRACKET DOLLAR"); :}
+    |   CHAR IDENTIFIER LBRACKET LITERAL_INT RBRACKET DOLLAR {: System.out.println("encontro CHAR IDENTIFIER LBRACKET LITERAL_INT RBRACKET DOLLAR"); :}
     ;
 
-getValorArray ::= IDENTIFIER declaraArrayAux
+declaraArrayAux ::= LBRACKET LITERAL_INT RBRACKET {: System.out.println("encontro LBRACKET LITERAL_INT RBRACKET"); :}
     ;
 
-setValorArray ::= getValorArray ASIG expresion ;
+declaraVar ::= INT:t IDENTIFIER:i ASIG expresion {: System.out.println("encontro INT IDENTIFIER ASIG expresion"); 
+    /* Get the current symbol table for the function */
+    //SymbolTable symbolTable = (SymbolTable) getSymbolTableStack().peek();
 
-lectura ::= LEER LPAREN numerico RPAREN DOLLAR ;
+    /* Check if the symbol has already been declared in this function */
+    //if (symbolTable.containsSymbol(id)) {
+    //    System.out.println("Symbol " + id + " already declared in this function");
+    //}
 
-numerico ::= LITERAL_INT | LITERAL_FLOAT ; 
-
-escritura ::= ESCRIBIR LPAREN expresion RPAREN DOLLAR ;
-
-comentario ::= ARROBA LITERAL_STRING
-    | LCOMENTB LITERAL_STRING RCOMENTB
+    /* Add the symbol to the symbol table */
+    //symbolTable.addSymbol(id, t);
+    listaVariables.addParameter(new FormalParameter(i,(String) t));
+ :}
+    | CHAR IDENTIFIER  ASIG expresion {: System.out.println("encontro CHAR IDENTIFIER ASIG expresion");  :}
+    | tipo IDENTIFIER declaraArrayAux ASIG expresion {: System.out.println("encontro tipo IDENTIFIER declaraArrayAux ASIG             ");  :}
+    | tipo IDENTIFIER ASIG expresion {: System.out.println("encontro tipo IDENTIFIER ASIG expresion");  :}
     ;
+
+getValorArray ::= IDENTIFIER declaraArrayAux {: System.out.println("encontro getValorArray"); :}
+    ;
+
+setValorArray ::= getValorArray ASIG expresion  {: System.out.println("encontro set valor array"); :} ;
+
+lectura ::= LEER LPAREN numerico RPAREN {: System.out.println("encontro lectura"); :};
+
+numerico ::= LITERAL_INT | LITERAL_FLOAT  {: System.out.println("encontro numerico"); :};
+
+escritura ::= ESCRIBIR LPAREN expresion RPAREN {: System.out.println("encontro escribir"); :}; 
+
+

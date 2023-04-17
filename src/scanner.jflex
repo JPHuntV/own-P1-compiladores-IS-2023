@@ -26,46 +26,41 @@ import java_cup.runtime.*;
   private Symbol symbol(int type, Object value) {
     return new Symbol(type, yyline+1, yycolumn+1, value);
   }
+
+  private void reportarError(){
+    System.out.println("Illegal character \""+yytext()+"\" at line "+yyline+", column "+yycolumn);
+  }
 %}
+
+
 //----------Expresiones Regulares
-
-//numero = (-?)[1-9][0-9]* | 0
-//floatN = (((-?)[1-9][0-9]*) | 0) . [0-9]+ | 0.0
-
-//Identifier = [a-zA-Z_] [a-zA-Z0-9_]*
-
-//operador = "+" | "-" | "*" | "/" | "<" | ">" | "<=" | ">=" | "==" | "!="
-/**/
 LineTerminator = \r|\n|\r\n
 InputCharacter = [^\r\n]
 
 WhiteSpace = {LineTerminator} | [ \t\f]
 
-Comment = {EndOfLineComment} 
-//Comment = {EndOfLineComment}
-
-//TraditionalComment = ["/_"][^*]*[*]+([^*/][^*]*[*]+)*["_/"] 
+Comment = {EndOfLineComment}  
 EndOfLineComment = "@" {InputCharacter}* {LineTerminator}? 
-//any = [\s\S]*?
+
 numero = 0 | [1-9][0-9]*
 identificador = [a-zA-Z_] [a-zA-Z0-9_]*
 float    = [0-9]+ \. [0-9]*
-simbolo = "!" | "@" | "#" | "$" | "%" | "^" | "&" | "*" 
+simbolo = "!" | "@" | "#"  | "%" | "^" | "&" | "*" 
     | "(" | ")" | "-" | "_" | "+" | "=" | "[" | "]" | "{" 
     | "}" | ";" | ":" | "\'" | '\"' | "," | "." | "<" | ">" 
     | "?" | "/" | "|" | "\\"
 
-/* string and character literals */
+
 string = \"(\\.|[^\"])*\"
 char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
 //------estados
 %state COMMENTB
 %%
-//--------------------reglas lexicas
+
 
 <YYINITIAL>{
     "!"             {return symbol(REXC); }
-    "@"             {return symbol(ARROBA); }
+    //"@"             {return symbol(ARROBA); }
     "#"             {return symbol(OR); }
     "$"             {return symbol(DOLLAR); }
     //"%"             {return symbol(PORCIENTO); }
@@ -96,9 +91,6 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
     //"\\"            {return symbol(SLASH); }
     "<="            {return symbol(MENORIGUAL); }
     ">="            {return symbol(MAYORIGUAL); }
-
-
-
     "=="            {return symbol(EQUAL); }
     "!="            {return symbol(NOTEQUAL); }
     "**"            {return symbol(POTENCIA); }
@@ -106,16 +98,16 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
     "++"            {return symbol(INCREMENTO); }
     "--"            {return symbol(DECREMENTO); }
     "not"           {return symbol(NOT); }
-    "int"           {return symbol(INT); }
-    "float"         {return symbol(FLOAT); }
-    "string"        {return symbol(STRING); }
-    "char"          {return symbol(CHAR); }
-    "array"         {return symbol(ARRAY); }
-    "bool"          {return symbol(BOOL); }
-    "main"          {return symbol(MAIN); }
+    "int"           {return symbol(INT,yytext()); }
+    "float"         {return symbol(FLOAT,yytext()); }
+    "string"        {return symbol(STRING,yytext()); }
+    "char"          {return symbol(CHAR,yytext()); }
+    "array"         {return symbol(ARRAY,yytext()); }
+    "bool"          {return symbol(BOOL,yytext()); }
+    "main"          {return symbol(MAIN,yytext()); }
     "true"          {return symbol(LITERAL_BOOL, true); }
     "false"         {return symbol(LITERAL_BOOL, false); }
-    "if"            {return symbol(IF); }
+    "if"            {return symbol(IF);  }
     "elif"          {return symbol(ELIF); }
     "else"          {return symbol(ELSE); }
     "while"         {return symbol(WHILE); }
@@ -123,37 +115,32 @@ char = \'[a-zA-Z]\' |\'[0-9]\'|\'{simbolo}\'
     "for"           {return symbol(FOR); }
     "return"        {return symbol(RETURN); }
     "break"         {return symbol(BREAK); }
-    "leer"          {return symbol(LEER); }
-    "escribir"      {return symbol(ESCRIBIR); }
-    "/_"      { yybegin(COMMENTB); }
+    "leer"          {return symbol(LEER,yytext()); }
+    "escribir"      {return symbol(ESCRIBIR,yytext()); }
 
-    
-//##################################################
-    //ER
+    "/_"            { yybegin(COMMENTB); }
+
     {numero}            {return symbol(LITERAL_INT, new Integer(Integer.parseInt(yytext()))); }
     {float}             {return symbol(LITERAL_FLOAT, new Float(yytext().substring(0,yylength()-1)));  }
 
-    {identificador}                   { return symbol(IDENTIFIER, yytext()); }
-    {string}                    {return symbol(LITERAL_STRING); }
-    {char}                    {return symbol(LITERAL_CHAR); }
-    //{simbolo}            {return symbol(simbolo, yytext()); }
-//<YYINITIAL> {operador}            {return new Symbol(operador, yycolumn, yyline, yytext()); }
-/* comments */
-    {Comment}                      { /* ignore */ }
-    /* whitespace */
-    {WhiteSpace}                   { /* ignore */ }
-}
-//##################################################
+    {identificador}     { return symbol(IDENTIFIER, yytext()); }
+    {string}            {return symbol(LITERAL_STRING); }
+    {char}              {return symbol(LITERAL_CHAR); }
 
- 
+    {Comment}           { /* ignore */ }
+
+    {WhiteSpace}        { /* ignore */ }
+}
+
 <COMMENTB>{
-[^_]*      { }
-"_"+[^_/]* { }
-"_"+"/"    { yybegin(YYINITIAL); }
-.          { }
+  [^_]*      { }
+  "_"+[^_/]* { }
+  "_"+"/"    { yybegin(YYINITIAL); }
+  .          { }
 }
 
-/* error fallback */
-[^]                              { throw new RuntimeException("Illegal character \""+yytext()+
-                                                              "\" at line "+yyline+", column "+yycolumn); }
+
+//[^]                              { throw new RuntimeException("Illegal character \""+yytext()+
+//                                                              "\" at line "+yyline+", column "+yycolumn); }
+[^]                              { reportarError(); }
 <<EOF>>                          { return symbol(EOF); }
